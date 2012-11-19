@@ -1,20 +1,20 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    01:53:21 06/02/2011 
--- Design Name: 
--- Module Name:    sha256_e1 - Behavioral 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
+-- Company:
+-- Engineer:
 --
--- Dependencies: 
+-- Create Date:    01:53:21 06/02/2011
+-- Design Name:
+-- Module Name:    sha256_e1 - Behavioral
+-- Project Name:
+-- Target Devices:
+-- Tool versions:
+-- Description:
 --
--- Revision: 
+-- Dependencies:
+--
+-- Revision:
 -- Revision 0.01 - File Created
--- Additional Comments: 
+-- Additional Comments:
 --
 ----------------------------------------------------------------------------------
 library IEEE;
@@ -30,15 +30,15 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity sha256_e1 is
-    Port ( d : in  STD_LOGIC_VECTOR (31 downto 0);
-           q : out  STD_LOGIC_VECTOR (31 downto 0));
+  Port ( d : in  STD_LOGIC_VECTOR (31 downto 0);
+         q : out  STD_LOGIC_VECTOR (31 downto 0));
 end sha256_e1;
 
 architecture Behavioral of sha256_e1 is
 
 begin
 
-	q <= (d(5 downto 0) & d(31 downto 6)) xor (d(10 downto 0) & d(31 downto 11)) xor (d(24 downto 0) & d(31 downto 25));
+  q <= (d(5 downto 0) & d(31 downto 6)) xor (d(10 downto 0) & d(31 downto 11)) xor (d(24 downto 0) & d(31 downto 25));
 
 end Behavioral;
 

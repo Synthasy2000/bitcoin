@@ -1,0 +1,3 @@
+NET "rx"                      LOC = "B21";   ##
+NET "tx"                      LOC = "H17";   ##
+NET "clk_in"                    LOC = "AB13";  ##27MHz on-board single-ended

@@ -61,6 +61,14 @@ architecture Behavioral of top is
         );
   END COMPONENT;
 
+  COMPONENT dcm
+    PORT(
+          CLK_IN1 : in std_logic;
+          CLK_OUT1 : out std_logic;
+          LOCKED : out std_logic
+        );
+  END COMPONENT;
+
   constant DEPTH : integer := 3;
 
   signal clk : std_logic;
@@ -86,49 +94,14 @@ begin
 
   currnonce <= nonce - 2 * 2 ** DEPTH;
 
-  clk_buf : BUFG
-  port map (I=>clk_dcmout,
-            O=>clk);
-
-  clk_in_buf : IBUFG
-  port map (I=>clk_in,
-            O=>clk_dcmin);
-
-  dcm : DCM_BASE
-  generic map (
-                CLKDV_DIVIDE => 2.0, -- Divide by: 1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5,6.0,6.5
-                                     -- 7.0,7.5,8.0,9.0,10.0,11.0,12.0,13.0,14.0,15.0 or 16.0
-                CLKFX_DIVIDE => 10, -- Can be any interger from 1 to 32
-                CLKFX_MULTIPLY => 12, -- Can be any integer from 2 to 32
-                CLKIN_DIVIDE_BY_2 => FALSE, -- TRUE/FALSE to enable CLKIN divide by two feature
-                CLKIN_PERIOD => 10.0, -- Specify period of input clock in ns from 1.25 to 1000.00
-                CLKOUT_PHASE_SHIFT => "NONE", -- Specify phase shift mode of NONE or FIXED
-                CLK_FEEDBACK => "NONE", -- Specify clock feedback of NONE or 1X
-                DCM_AUTOCALIBRATION => TRUE,
-                DCM_PERFORMANCE_MODE => "MAX_SPEED", -- Can be MAX_SPEED or MAX_RANGE
-                DESKEW_ADJUST => "SYSTEM_SYNCHRONOUS", -- SOURCE_SYNCHRONOUS, SYSTEM_SYNCHRONOUS or
-                                                       -- an integer from 0 to 15
-                DFS_FREQUENCY_MODE => "LOW", -- LOW or HIGH frequency mode for frequency synthesis
-                DLL_FREQUENCY_MODE => "LOW", -- LOW, HIGH, or HIGH_SER frequency mode for DLL
-                DUTY_CYCLE_CORRECTION => TRUE, -- Duty cycle correction, TRUE or FALSE
-                FACTORY_JF => X"F0F0", -- FACTORY JF Values Suggested to be set to X"F0F0"
-                PHASE_SHIFT => 0, -- Amount of fixed phase shift from -255 to 1023
-                STARTUP_WAIT => TRUE
-              ) -- Delay configuration DONE until DCM LOCK, TRUE/FALSE
+  inst_dcm : dcm
   port map (
-             CLK0 => open, -- 0 degree DCM CLK ouptput
-             CLK180 => open, -- 180 degree DCM CLK output
-             CLK270 => open, -- 270 degree DCM CLK output
-             CLK2X => open, -- 2X DCM CLK output
-             CLK2X180 => open, -- 2X, 180 degree DCM CLK out
-             CLK90 => open, -- 90 degree DCM CLK output
-             CLKDV => open, -- Divided DCM CLK out (CLKDV_DIVIDE)
-             CLKFX => clk_dcmout, -- DCM CLK synthesis out (M/D)
-             CLKFX180 => open, -- 180 degree CLK synthesis out
-             LOCKED => open, -- DCM LOCK status output
-             CLKFB => '0', -- DCM clock feedback
-             CLKIN => clk_dcmin, -- Clock input (from IBUFG, BUFG or DCM)
-             RST => '0' -- DCM asynchronous reset input
+             -- Clock in ports
+             CLK_IN1 => clk_in,
+             -- Clock out ports
+             CLK_OUT1 => clk,
+             -- Status and control signals
+             LOCKED => open
            );
 
   miner0: miner

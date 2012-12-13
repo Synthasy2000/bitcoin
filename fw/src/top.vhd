@@ -69,7 +69,7 @@ architecture Behavioral of top is
         );
   END COMPONENT;
 
-  constant DEPTH : integer := 3;
+  constant DEPTH : integer := 2;
 
   signal clk : std_logic;
   signal clk_dcmin : std_logic;
@@ -136,17 +136,19 @@ begin
         step <= "000000";
         nonce <= nonce + 1;
       end if;
+
+      --TODO: replace this with a _real_ communication system
       txdata <= "-------------------------------------------------";
                 txwidth <= "------";
                            txstrobe <= '0';
                            if rxstrobe = '1' then
                              if loading = '1' then
-                               if loadctr = "101011" then
+                               if loadctr = x"1B" then
                                  state <= load(343 downto 88);
                                  data <= load(87 downto 0) & rxdata;
                                  nonce <= x"00000000";
-                                 txdata <= "1111111111111111111111111111111111111111000000010";
-                                 txwidth <= "001010";
+                                 txdata <= x"1FFFFFFFFFE02";
+                                 txwidth <= x"0A";
                                  txstrobe <= '1';
                                  loading <= '0';
                                else
@@ -155,22 +157,22 @@ begin
                                  loadctr <= loadctr + 1;
                                end if;
                              else
-                               if rxdata = "00000000" then
-                                 txdata <= "1111111111111111111111111111111111111111000000000";
-                                 txwidth <= "001010";
+                               if rxdata = x"00" then
+                                 txdata <= x"1FFFFFFFFFE00";
+                                 txwidth <= x"0A";
                                  txstrobe <= '1';
-                               elsif rxdata = "00000001" then
+                               elsif rxdata = x"01" then
                                  loadctr <= "000000";
                                  loading <= '1';
                                end if;
                              end if;
                            elsif hit = '1' then
                              txdata <= currnonce(7 downto 0) & "01" & currnonce(15 downto 8) & "01" & currnonce(23 downto 16) & "01" & currnonce(31 downto 24) & "01000000100";
-                             txwidth <= "110010";
+                             txwidth <= x"32";
                              txstrobe <= '1';
                            elsif nonce = x"ffffffff" and step = "000000" then
-                             txdata <= "1111111111111111111111111111111111111111000000110";
-                             txwidth <= "110010";
+                             txdata <= x"1FFFFFFFFFE06";
+                             txwidth <= x"32";
                              txstrobe <= '1';
                            end if;
               end if;

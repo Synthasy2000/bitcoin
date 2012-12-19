@@ -29,7 +29,8 @@ entity top is
   port (
          clk_in : in  STD_LOGIC;
          tx     : out STD_LOGIC;
-         rx     : in  STD_LOGIC
+         rx     : in  STD_LOGIC;
+         leds   : out STD_LOGIC_VECTOR(3 downto 0)
        );
 end top;
 
@@ -88,6 +89,7 @@ architecture Behavioral of top is
   signal rxdata : std_logic_vector(7 downto 0);
   signal rxstrobe : std_logic;
   signal step : std_logic_vector(5 downto 0) := "000000";
+  signal locked : std_logic;
 
 begin
 
@@ -101,7 +103,7 @@ begin
              -- Clock out ports
              CLK_OUT1 => clk,
              -- Status and control signals
-             LOCKED => open
+             LOCKED => locked
            );
 
   miner0: miner
@@ -128,6 +130,8 @@ begin
              rxstrobe => rxstrobe
            );
 
+  leds(3) <= locked;
+
   process(clk)
   begin
     if rising_edge(clk) then
@@ -142,6 +146,7 @@ begin
                            if rxstrobe = '1' then
                              if loading = '1' then
                                if loadctr = "101011" then
+                                 leds(2 downto 0) <= "100";
                                  state <= load(343 downto 88);
                                  data <= load(87 downto 0) & rxdata;
                                  nonce <= x"00000000";
@@ -150,25 +155,30 @@ begin
                                  txstrobe <= '1';
                                  loading <= '0';
                                else
+                                 leds(2 downto 0) <= "101";
                                  load(343 downto 8) <= load(335 downto 0);
                                  load(7 downto 0) <= rxdata;
                                  loadctr <= loadctr + 1;
                                end if;
                              else
                                if rxdata = "00000000" then
+                                 leds(2 downto 0) <= "110";
                                  txdata <= "1111111111111111111111111111111111111111000000000";
                                  txwidth <= "001010";
                                  txstrobe <= '1';
                                elsif rxdata = "00000001" then
+                                 leds(2 downto 0) <= "111";
                                  loadctr <= "000000";
                                  loading <= '1';
                                end if;
                              end if;
                            elsif hit = '1' then
+                             leds(2 downto 0) <= "010";
                              txdata <= currnonce(7 downto 0) & "01" & currnonce(15 downto 8) & "01" & currnonce(23 downto 16) & "01" & currnonce(31 downto 24) & "01000000100";
                              txwidth <= "110010";
                              txstrobe <= '1';
                            elsif nonce = x"ffffffff" and step = "000000" then
+                             leds(2 downto 0) <= "011";
                              txdata <= "1111111111111111111111111111111111111111000000110";
                              txwidth <= "110010";
                              txstrobe <= '1';

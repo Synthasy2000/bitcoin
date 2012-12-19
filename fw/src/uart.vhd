@@ -82,7 +82,7 @@ begin
   begin
     if rising_edge(clk) then
       if txclksync = '1' or txclkdiv = "00000000000" then
-        txclkdiv <= "10000010001";
+        txclkdiv <= "00110111010";
       else
         txclkdiv <= txclkdiv - 1;
       end if;
@@ -93,9 +93,9 @@ begin
   begin
     if rising_edge(clk) then
       if rxclksync = '1' then
-        rxclkdiv <= "11000011001";
+        rxclkdiv <= "01010011000";
       elsif rxclkdiv = "00000000000000" then
-        rxclkdiv <= "10000010001";
+        rxclkdiv <= "00110111010";
       else
         rxclkdiv <= rxclkdiv - 1;
       end if;

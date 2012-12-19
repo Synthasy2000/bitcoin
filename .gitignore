@@ -6,6 +6,7 @@
 *.hex
 *.map
 *.cof
+*.pyc
 
 *.schlog
 *.symlog
@@ -29,3 +30,4 @@ ipcore_dir/*
 !*.xco
 !*.xise
 
+sw/config.py

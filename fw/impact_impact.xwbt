@@ -1,0 +1,8 @@
+INTSTYLE=impact
+INFILE=/home/ali/projects/.perma/bitcoin/fw/impact.xsl
+OUTFILE=/home/ali/projects/.perma/bitcoin/fw/impact.xsl
+FAMILY=None
+PART=None
+WORKINGDIR=/home/ali/projects/.perma/bitcoin/fw
+LICENSE=iMPACT
+USER_INFO=iMPACT

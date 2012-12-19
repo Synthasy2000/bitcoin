@@ -1,6 +1,16 @@
-NET "rx"                      LOC = "B21";   ##
-NET "tx"                      LOC = "H17";   ##
+NET "rx"                      LOC = "H17";   ##net rx (fpga IN) -> wire labelled tx (cp2103 OUT)
+NET "tx"                      LOC = "B21";   ##net tx (fpga OUT) -> wire labelled rx (cp2103 IN)
 NET "clk_in"                    LOC = "AB13";  ##27MHz on-board single-ended
+NET "leds[0]" LOC = "D17";
+NET "leds[1]" LOC = "AB4";
+NET "leds[2]" LOC = "D21";
+NET "leds[3]" LOC = "W15";
 #Created by Constraints Editor (xc6slx45t-fgg484-3) - 2012/12/03
+#NET "clk_in" TNM_NET = clk_in;
+#TIMESPEC TS_clk_in = PERIOD "clk_in" 27 MHz HIGH 50%;
+#Created by Constraints Editor (xc6slx45t-fgg484-3) - 2012/12/19
 NET "clk_in" TNM_NET = clk_in;
 TIMESPEC TS_clk_in = PERIOD "clk_in" 27 MHz HIGH 50%;
+NET "rx" OFFSET = IN 1 us VALID 8.68 us BEFORE "clk_in" RISING;
+NET "tx" OFFSET = OUT AFTER "clk_in";
+PIN "inst_dcm/pll_base_inst.CLKOUT0" TNM = refclk;

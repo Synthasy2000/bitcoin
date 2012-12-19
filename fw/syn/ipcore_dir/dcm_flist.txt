@@ -1,4 +1,5 @@
 # Output products list for <dcm>
+_xmsgs/pn_parser.xmsgs
 dcm/clk_wiz_v3_6_readme.txt
 dcm/doc/clk_wiz_v3_6_readme.txt
 dcm/doc/clk_wiz_v3_6_vinfo.html
@@ -41,6 +42,7 @@ dcm/simulation/timing/vcs_session.tcl
 dcm/simulation/timing/wave.do
 dcm.asy
 dcm.gise
+dcm.sym
 dcm.ucf
 dcm.vhd
 dcm.vho

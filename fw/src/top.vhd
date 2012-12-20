@@ -70,7 +70,7 @@ architecture Behavioral of top is
         );
   END COMPONENT;
 
-  constant DEPTH : integer := 1;
+  constant DEPTH : integer := 3;
 
   signal clk : std_logic;
   signal clk_dcmin : std_logic;

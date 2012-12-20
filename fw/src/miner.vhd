@@ -28,9 +28,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 --use UNISIM.VComponents.all;
 
 entity miner is
-  generic ( DEPTH : integer );
   Port ( clk : in  STD_LOGIC;
-         step : in  STD_LOGIC_VECTOR (5 downto 0);
          data : in  STD_LOGIC_VECTOR (95 downto 0);
          state : in  STD_LOGIC_VECTOR (255 downto 0);
          nonce : in  STD_LOGIC_VECTOR (31 downto 0);
@@ -39,14 +37,12 @@ end miner;
 
 architecture Behavioral of miner is
 
-  COMPONENT sha256_pipeline
-    generic ( DEPTH : integer );
+  COMPONENT sha256_pipe2_base
     PORT(
           clk : IN std_logic;
-          step : in  STD_LOGIC_VECTOR (5 downto 0);
-          state : IN std_logic_vector(255 downto 0);
-          input : IN std_logic_vector(511 downto 0);
-          hash : OUT std_logic_vector(255 downto 0)
+          i_state : IN std_logic_vector(255 downto 0);
+          i_data : IN std_logic_vector(511 downto 0);
+          outhash : OUT std_logic_vector(255 downto 0)
         );
   END COMPONENT;
 
@@ -63,27 +59,26 @@ begin
 
   innerdata <= innerprefix & nonce & data;
   outerdata <= outerprefix & innerhash;
-  hit <= '1' when outerhash(255 downto 224) = x"00000000" and step = "000000" else '0';
+  hit <= '1' when outerhash(255 downto 224) = x"00000000" else '0';
 
-  inner: sha256_pipeline
-  generic map ( DEPTH => DEPTH )
+  inner: sha256_pipe2_base
   port map (
              clk => clk,
-             step => step,
-             state => state,
-             input => innerdata,
-             hash => innerhash
+             i_state => state,
+             i_data => innerdata,
+             outhash => innerhash
            );
 
-  outer: sha256_pipeline
-  generic map ( DEPTH => DEPTH )
-  port map (
-             clk => clk,
-             step => step,
-             state => outerstate,
-             input => outerdata,
-             hash => outerhash
-           );
+  --outer: sha256_pipe2_base
+  --port map (
+  --           clk => clk,
+  --           i_state => outerstate,
+  --           i_data => outerdata,
+  --           outhash => outerhash
+  --         );
+
+  outerhash <= innerhash;
+  outerdata <= innerdata;
 
 end Behavioral;
 

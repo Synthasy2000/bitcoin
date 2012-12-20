@@ -84,9 +84,16 @@ begin
     signal round_w : std_logic_vector(511 downto 0);
     signal round_s : std_logic_vector(255 downto 0);
   begin
-    round_k <= K(i * 2 ** (6 - DEPTH) + conv_integer(step));
+
     round_w <= w(i) when step = "000000" else w(i + 1);
     round_s <= s(i) when step = "000000" else s(i + 1);
+
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        round_k <= K(i * 2 ** (6 - DEPTH) + conv_integer(step));
+      end if;
+    end process;
 
     transform: sha256_transform
     port map (

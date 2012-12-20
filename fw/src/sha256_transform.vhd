@@ -134,11 +134,11 @@ begin
              q => s1
            );
 
-  t <= s_in(255 downto 224) + e1 + ch + w_in(31 downto 0) + k;
-
   process(clk)
   begin
     if rising_edge(clk) then
+      t <= s_in(255 downto 224) + e1 + ch + w_in(31 downto 0) + k;
+
       w_out(511 downto 480) <= s1 + w_in(319 downto 288) + s0 + w_in(31 downto 0);
       w_out(479 downto 0) <= w_in(511 downto 32);
       s_out(255 downto 160) <= s_in(223 downto 128);

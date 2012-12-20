@@ -71,26 +71,26 @@ class Pool(object):
           response = conn.getresponse()
           if not self.longpolling:
             headers = response.getheaders()
-            #for h in headers:
-              #if h[0] == "x-long-polling":
-              #  url = h[1]
-              #  try:
-              #    if url[0] == "/": url = "http://" + s.host + ":" + str(s.port) + url
-              #    if url[:7] != "http://": raise Exception()
-              #    parts = url[7:].split("/", 2)
-              #    path = "/" + parts[1]
-              #    parts = parts[0].split(":")
-              #    if len(parts) != 2: raise Exception()
-              #    host = parts[0]
-              #    port = parts[1]
-              #    self.miner.log("Found long polling URL for %s: %s\n" % (self.name, url), self.miner.green)
-              #    self.longpolling = True
-              #    self.longpollingthread = threading.Thread(None, self.longpollingworker, self.name + "_longpolling", (host, port, path))
-              #    self.longpollingthread.daemon = True
-              #    self.longpollingthread.start()
-              #  except:
-              #    self.miner.log("Invalid long polling URL for %s: %s\n" % (self.name, url), self.miner.yellow)
-              #  break
+            for h in headers:
+              if h[0] == "x-long-polling":
+                url = h[1]
+                try:
+                  if url[0] == "/": url = "http://" + s.host + ":" + str(s.port) + url
+                  if url[:7] != "http://": raise Exception()
+                  parts = url[7:].split("/", 2)
+                  path = "/" + parts[1]
+                  parts = parts[0].split(":")
+                  if len(parts) != 2: raise Exception()
+                  host = parts[0]
+                  port = parts[1]
+                  self.miner.log("Found long polling URL for %s: %s\n" % (self.name, url), self.miner.green)
+                  self.longpolling = True
+                  self.longpollingthread = threading.Thread(None, self.longpollingworker, self.name + "_longpolling", (host, port, path))
+                  self.longpollingthread.daemon = True
+                  self.longpollingthread.start()
+                except:
+                  self.miner.log("Invalid long polling URL for %s: %s\n" % (self.name, url), self.miner.yellow)
+                break
           response = json.loads(response.read())
           state = binascii.unhexlify(response["result"]["midstate"])
           data = binascii.unhexlify(response["result"]["data"])
@@ -387,6 +387,10 @@ class Miner(object):
     data = self.fpga.read(100)
     if len(data) == 0: self.die(1, "FPGA does not respond!\n")
     self.log("Done\n")
+
+    self.log("Verify FPGA functions...");
+    self.mine(Job(None, binascii.unhexlify("33c5bf5751ec7f7e056443b5aee3800331432c83f404d9de38b94ecbf907b92d"), binascii.unhexlify("ce92099c5a80bb81c52990d5c0924c625fd25a535640607d5a4bdf8174e2c8d500000000000000000000000080000000000000000b290c1a42313b4f21b5bcb8"), binascii.unhexlify("8e0b31c5")))
+    self.mine(Job(None, binascii.unhexlify("33c5bf5751ec7f7e056443b5aee3800331432c83f404d9de38b94ecbf907b92d"), binascii.unhexlify("4679ba4ec99876bf4bfe086082b400254df6c356451471139a3afa71e48f544a000000000000000000000000000000000000000087320b1a1426674f2fa722ce"), binascii.unhexlify("000187a3")))
 
     #Measure FPGA performance
     self.log("Measuring FPGA performance... ")

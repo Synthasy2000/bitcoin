@@ -307,6 +307,7 @@ class Miner(object):
     self.conlock.release()
 
   def run(self, mainwin):
+    #Read config file + setup window
     self.rc = 0
     self.conlock = threading.RLock()
     self.fpgalock = threading.RLock()
@@ -378,12 +379,16 @@ class Miner(object):
     self.logwin.scrollok(True)
     self.mainwin.refresh()
     self.showstats()
+
+    #Connect to FPGA
     self.log("Connecting to FPGA... ")
     self.fpga = serial.Serial(self.fpgaport, 115200, serial.EIGHTBITS, serial.PARITY_NONE, serial.STOPBITS_ONE, self.fpgapollinterval, False, False, None, False, None)
     self.fpga.write(struct.pack("45B", *([0] * 45)))
     data = self.fpga.read(100)
     if len(data) == 0: self.die(1, "FPGA does not respond!\n")
     self.log("Done\n")
+
+    #Measure FPGA performance
     self.log("Measuring FPGA performance... ")
     starttime = datetime.datetime.utcnow()
     self.mine(Job(None, binascii.unhexlify("1625cbf1a5bc6ba648d1218441389e00a9dc79768a2fc6f2b79c70cf576febd0"), "\0" * 64 + binascii.unhexlify("4c0afa494de837d81a269421"), binascii.unhexlify("7bc2b302")))
@@ -392,10 +397,14 @@ class Miner(object):
     self.mhps = 45.335163 / delta
     delta = min(60, delta * 94.738)
     self.log("%f MH/s\n" % self.mhps, curses.A_BOLD)
+
+    #Setup job interval based on performance
     self.fpgajobinterval = min(self.fpgajobinterval, max(0.5, delta * 0.8 - 1))
     self.fpgapollinterval = min(self.fpgapollinterval, self.fpgajobinterval / 5)
     self.log("FPGA job interval: ")
     self.log("%f seconds\n" % self.fpgajobinterval, curses.A_BOLD)
+
+    #Connect to each pool
     for p in self.pools:
       p.thread = threading.Thread(None, p.getwork, p.name + "_getwork")
       p.thread.daemon = True
@@ -425,6 +434,8 @@ class Miner(object):
 
   def mine(self, job, inject = False):
     if job.pool != None: self.log("Mining: %s:%s:%s\n" % (job.pool.name, binascii.hexlify(job.state), binascii.hexlify(job.data[64:76])))
+
+    #Send work to FPGA
     self.fpgalock.acquire()
     self.fpga.write(struct.pack("B", 1) + job.state[::-1] + job.data[75:63:-1])
     if inject:
@@ -433,6 +444,8 @@ class Miner(object):
       self.fpgalock.release()
       return
     self.fpga.timeout = 1
+
+    #Wait for it to be loaded
     while True:
       resp = self.fpga.read(1)
       if len(resp) == 0: self.die(2, "Timed out waiting for FPGA to accept work\n")
@@ -449,6 +462,8 @@ class Miner(object):
     self.job = job
     self.jobtimeout = datetime.datetime.utcnow() + datetime.timedelta(seconds = self.fpgajobinterval)
     self.fpgalock.release()
+
+    #Get result phase
     while True:
       if self.jobtimeout <= datetime.datetime.utcnow(): break
       self.fpga.timeout = self.fpgapollinterval

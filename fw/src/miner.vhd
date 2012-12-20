@@ -63,6 +63,7 @@ begin
 
   innerdata <= innerprefix & nonce & data;
   outerdata <= outerprefix & innerhash;
+  --Top 32bit space is 0, and finished all steps
   hit <= '1' when outerhash(255 downto 224) = x"00000000" and step = "000000" else '0';
 
   inner: sha256_pipeline

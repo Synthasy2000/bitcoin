@@ -135,57 +135,71 @@ begin
   process(clk)
   begin
     if rising_edge(clk) then
+
+      --Increment stop/nonce depending on DEPTH
       step <= step + 1;
       if conv_integer(step) = 2 ** (6 - DEPTH) - 1 then
         step <= "000000";
         nonce <= nonce + 1;
       end if;
-      txdata <= "-------------------------------------------------";
-                txwidth <= "------";
-                           txstrobe <= '0';
-                           if rxstrobe = '1' then
-                             if loading = '1' then
-                               if loadctr = "101011" then
-                                 leds(2 downto 0) <= "100";
-                                 state <= load(343 downto 88);
-                                 data <= load(87 downto 0) & rxdata;
-                                 nonce <= x"00000000";
-                                 txdata <= "1111111111111111111111111111111111111111000000010";
-                                 txwidth <= "001010";
-                                 txstrobe <= '1';
-                                 loading <= '0';
-                               else
-                                 leds(2 downto 0) <= "101";
-                                 load(343 downto 8) <= load(335 downto 0);
-                                 load(7 downto 0) <= rxdata;
-                                 loadctr <= loadctr + 1;
-                               end if;
-                             else
-                               if rxdata = "00000000" then
-                                 leds(2 downto 0) <= "110";
-                                 txdata <= "1111111111111111111111111111111111111111000000000";
-                                 txwidth <= "001010";
-                                 txstrobe <= '1';
-                               elsif rxdata = "00000001" then
-                                 leds(2 downto 0) <= "111";
-                                 loadctr <= "000000";
-                                 loading <= '1';
-                               end if;
-                             end if;
-                           elsif hit = '1' then
-                             leds(2 downto 0) <= "010";
-                             txdata <= currnonce(7 downto 0) & "01" & currnonce(15 downto 8) & "01" & currnonce(23 downto 16) & "01" & currnonce(31 downto 24) & "01000000100";
-                             txwidth <= "110010";
-                             txstrobe <= '1';
-                           elsif nonce = x"ffffffff" and step = "000000" then
-                             leds(2 downto 0) <= "011";
-                             txdata <= "1111111111111111111111111111111111111111000000110";
-                             txwidth <= "110010";
-                             txstrobe <= '1';
-                           end if;
-              end if;
-    end process;
 
+      --IO/Control
+      txstrobe <= '0';
+      if rxstrobe = '1' then
+        --Received some data
+        if loading = '1' then
+          --Is in the 'loading' stage
+          if loadctr = "101011" then
+            --Finish loading 'data'
+            leds(2 downto 0) <= "100";
+            state <= load(343 downto 88);
+            data <= load(87 downto 0) & rxdata;
+            nonce <= x"00000000";
+            --Command=1
+            txdata <= "1111111111111111111111111111111111111111000000010";
+            txwidth <= "001010";
+            txstrobe <= '1';
+            loading <= '0';
+          else
+            --Load 'state'
+            leds(2 downto 0) <= "101";
+            load(343 downto 8) <= load(335 downto 0);
+            load(7 downto 0) <= rxdata;
+            loadctr <= loadctr + 1;
+          end if;
+        else
+          --Not 'loading'
+          if rxdata = "00000000" then
+            --FPGA existence check?
+            leds(2 downto 0) <= "110";
+            --Command=0
+            txdata <= "1111111111111111111111111111111111111111000000000";
+            txwidth <= "001010";
+            txstrobe <= '1';
+          elsif rxdata = "00000001" then
+            --Start 'loading' data
+            leds(2 downto 0) <= "111";
+            loadctr <= "000000";
+            loading <= '1';
+          end if;
+        end if;
+      elsif hit = '1' then
+        --Found a valid nonce
+        leds(2 downto 0) <= "010";
+        --Command=2
+        txdata <= currnonce(7 downto 0) & "01" & currnonce(15 downto 8) & "01" & currnonce(23 downto 16) & "01" & currnonce(31 downto 24) & "01000000100";
+        txwidth <= "110010";
+        txstrobe <= '1';
+      elsif nonce = x"ffffffff" and step = "000000" then
+        --Exhausted search space
+        leds(2 downto 0) <= "011";
+        --Command=3
+        txdata <= "1111111111111111111111111111111111111111000000110";
+        txwidth <= "110010";
+        txstrobe <= '1';
+      end if;
+    end if;
+  end process;
 
-  end Behavioral;
+end Behavioral;
 

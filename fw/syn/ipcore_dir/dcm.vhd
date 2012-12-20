@@ -55,12 +55,12 @@
 -- "Output    Output      Phase     Duty      Pk-to-Pk        Phase"
 -- "Clock    Freq (MHz) (degrees) Cycle (%) Jitter (ps)  Error (ps)"
 ------------------------------------------------------------------------------
--- CLK_OUT1____49.950______0.000______50.0______260.645____233.502
+-- CLK_OUT1___200.000______0.000______50.0______141.940____155.965
 --
 ------------------------------------------------------------------------------
 -- "Input Clock   Freq (MHz)    Input Jitter (UI)"
 ------------------------------------------------------------------------------
--- __primary______________27____________0.010
+-- __primary_____________200____________0.010
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -74,7 +74,8 @@ use unisim.vcomponents.all;
 entity dcm is
 port
  (-- Clock in ports
-  CLK_IN1           : in     std_logic;
+  CLK_IN1_P         : in     std_logic;
+  CLK_IN1_N         : in     std_logic;
   -- Clock out ports
   CLK_OUT1          : out    std_logic;
   -- Status and control signals
@@ -84,7 +85,7 @@ end dcm;
 
 architecture xilinx of dcm is
   attribute CORE_GENERATION_INFO : string;
-  attribute CORE_GENERATION_INFO of xilinx : architecture is "dcm,clk_wiz_v3_6,{component_name=dcm,use_phase_alignment=true,use_min_o_jitter=false,use_max_i_jitter=false,use_dyn_phase_shift=false,use_inclk_switchover=false,use_dyn_reconfig=false,feedback_source=FDBK_AUTO,primtype_sel=PLL_BASE,num_out_clk=1,clkin1_period=37.037,clkin2_period=37.037,use_power_down=false,use_reset=false,use_locked=true,use_inclk_stopped=false,use_status=false,use_freeze=false,use_clk_valid=false,feedback_type=SINGLE,clock_mgr_type=AUTO,manual_override=false}";
+  attribute CORE_GENERATION_INFO of xilinx : architecture is "dcm,clk_wiz_v3_6,{component_name=dcm,use_phase_alignment=true,use_min_o_jitter=true,use_max_i_jitter=false,use_dyn_phase_shift=false,use_inclk_switchover=false,use_dyn_reconfig=false,feedback_source=FDBK_AUTO,primtype_sel=PLL_BASE,num_out_clk=1,clkin1_period=5.000,clkin2_period=5.000,use_power_down=false,use_reset=false,use_locked=true,use_inclk_stopped=false,use_status=false,use_freeze=false,use_clk_valid=false,feedback_type=SINGLE,clock_mgr_type=AUTO,manual_override=false}";
   -- Input clock buffering / unused connectors
   signal clkin1      : std_logic;
   -- Output clock buffering / unused connectors
@@ -103,10 +104,11 @@ begin
 
   -- Input buffering
   --------------------------------------
-  clkin1_buf : IBUFG
+  clkin1_buf : IBUFGDS
   port map
-   (O => clkin1,
-    I => CLK_IN1);
+   (O  => clkin1,
+    I  => CLK_IN1_P,
+    IB => CLK_IN1_N);
 
 
   -- Clocking primitive
@@ -117,16 +119,16 @@ begin
 
   pll_base_inst : PLL_BASE
   generic map
-   (BANDWIDTH            => "OPTIMIZED",
+   (BANDWIDTH            => "HIGH",
     CLK_FEEDBACK         => "CLKFBOUT",
     COMPENSATION         => "SYSTEM_SYNCHRONOUS",
     DIVCLK_DIVIDE        => 1,
-    CLKFBOUT_MULT        => 37,
+    CLKFBOUT_MULT        => 5,
     CLKFBOUT_PHASE       => 0.000,
-    CLKOUT0_DIVIDE       => 20,
+    CLKOUT0_DIVIDE       => 5,
     CLKOUT0_PHASE        => 0.000,
     CLKOUT0_DUTY_CYCLE   => 0.500,
-    CLKIN_PERIOD         => 37.037,
+    CLKIN_PERIOD         => 5.000,
     REF_JITTER           => 0.010)
   port map
     -- Output clocks

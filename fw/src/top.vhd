@@ -19,15 +19,21 @@
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+--use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use ieee.numeric_std.all;
 
 library UNISIM;
 use UNISIM.VComponents.all;
 
+library work;
+use work.btc.all;
+
 entity top is
   port (
-         clk_in : in  STD_LOGIC;
+         clk_in_p : in  STD_LOGIC;
+         clk_in_n : in  STD_LOGIC;
+
          tx     : out STD_LOGIC;
          rx     : in  STD_LOGIC;
          leds   : out STD_LOGIC_VECTOR(3 downto 0)
@@ -35,6 +41,7 @@ entity top is
 end top;
 
 architecture Behavioral of top is
+  constant DEPTH : integer := 1;
 
   COMPONENT miner
     generic ( DEPTH : integer );
@@ -64,25 +71,29 @@ architecture Behavioral of top is
 
   COMPONENT dcm
     PORT(
-          CLK_IN1 : in std_logic;
+          CLK_IN1_P : in std_logic;
+          CLK_IN1_N : in std_logic;
           CLK_OUT1 : out std_logic;
           LOCKED : out std_logic
         );
   END COMPONENT;
 
-  constant DEPTH : integer := 3;
-
   signal clk : std_logic;
   signal clk_dcmin : std_logic;
   signal clk_dcmout : std_logic;
+
   signal data : std_logic_vector(95 downto 0);
   signal state : std_logic_vector(255 downto 0);
-  signal nonce : std_logic_vector(31 downto 0);
-  signal currnonce : std_logic_vector(31 downto 0);
   signal load : std_logic_vector(343 downto 0);
   signal loadctr : std_logic_vector(5 downto 0);
   signal loading : std_logic := '0';
-  signal hit : std_logic;
+
+  signal nonces : slv32;
+  signal curnonces : slv32;
+  signal hits : std_logic_vector(WIDTH-1 downto 0);
+  signal hit  : std_logic;
+  signal exhausted : std_logic;
+
   signal txdata : std_logic_vector(48 downto 0);
   signal txwidth : std_logic_vector(5 downto 0);
   signal txstrobe : std_logic;
@@ -90,32 +101,35 @@ architecture Behavioral of top is
   signal rxstrobe : std_logic;
   signal step : std_logic_vector(5 downto 0) := "000000";
   signal locked : std_logic;
-
 begin
-
-
-  currnonce <= nonce - 2 * 2 ** DEPTH;
 
   inst_dcm : dcm
   port map (
              -- Clock in ports
-             CLK_IN1 => clk_in,
+             CLK_IN1_P => clk_in_p,
+             CLK_IN1_N => clk_in_n,
              -- Clock out ports
              CLK_OUT1 => clk,
              -- Status and control signals
              LOCKED => locked
            );
 
-  miner0: miner
-  generic map ( DEPTH => DEPTH )
-  port map (
-             clk => clk,
-             step => step,
-             data => data,
-             state => state,
-             nonce => nonce,
-             hit => hit
-           );
+  miners: for i in 0 to WIDTH-1 generate
+  begin
+    curnonces(i) <= nonces(i) - 2 * 2 ** DEPTH;
+
+    inst_miner: miner
+    generic map ( DEPTH => DEPTH )
+    port map (
+               clk => clk,
+               step => step,
+               data => data,
+               state => state,
+
+               nonce => nonces(i),
+               hit => hits(i)
+             );
+  end generate;
 
   serial: uart
   port map (
@@ -131,6 +145,8 @@ begin
            );
 
   leds(3) <= locked;
+  hit <= or_slv(hits);
+  exhausted <= nonces_exhausted(nonces);
 
   process(clk)
   begin
@@ -140,7 +156,9 @@ begin
       step <= step + 1;
       if conv_integer(step) = 2 ** (6 - DEPTH) - 1 then
         step <= "000000";
-        nonce <= nonce + 1;
+        for i in 0 to WIDTH-1 loop
+          nonces(i) <= nonces(i) + WIDTH;
+        end loop;
       end if;
 
       --IO/Control
@@ -154,7 +172,9 @@ begin
             leds(2 downto 0) <= "100";
             state <= load(343 downto 88);
             data <= load(87 downto 0) & rxdata;
-            nonce <= x"00000000";
+            for i in 0 to WIDTH-1 loop
+              nonces(i) <= std_logic_vector(to_unsigned(i,32));
+            end loop;
             --Command=1
             txdata <= "1111111111111111111111111111111111111111000000010";
             txwidth <= "001010";
@@ -186,11 +206,15 @@ begin
       elsif hit = '1' then
         --Found a valid nonce
         leds(2 downto 0) <= "010";
-        --Command=2
-        txdata <= currnonce(7 downto 0) & "01" & currnonce(15 downto 8) & "01" & currnonce(23 downto 16) & "01" & currnonce(31 downto 24) & "01000000100";
+        for i in 0 to WIDTH-1 loop
+          --Command=2
+          if hits(i) = '1' then
+            txdata <= curnonces(i)(7 downto 0) & "01" & curnonces(i)(15 downto 8) & "01" & curnonces(i)(23 downto 16) & "01" & curnonces(i)(31 downto 24) & "01000000100";
+          end if;
+        end loop;
         txwidth <= "110010";
         txstrobe <= '1';
-      elsif nonce = x"ffffffff" and step = "000000" then
+      elsif exhausted = '1' and step = "000000" then
         --Exhausted search space
         leds(2 downto 0) <= "011";
         --Command=3

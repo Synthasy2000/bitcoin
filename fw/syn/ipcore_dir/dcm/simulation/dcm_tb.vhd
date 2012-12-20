@@ -82,11 +82,13 @@ architecture test of dcm_tb is
 
 
   -- we'll be using the period in many locations
-  constant PER1        : time := 37.037 ns;
+  constant PER1        : time := 5.000 ns;
 
 
   -- Declare the input clock signals
   signal CLK_IN1       : std_logic := '1';
+  signal CLK_IN1_P     : std_logic := '1';
+  signal CLK_IN1_N     : std_logic := '0';
   -- The high bit of the sampling counter
   signal COUNT         : std_logic;
   -- Status and control signals
@@ -102,7 +104,8 @@ generic (
   TCQ               : in time := 100 ps);
 port
  (-- Clock in ports
-  CLK_IN1           : in  std_logic;
+  CLK_IN1_P         : in  std_logic;
+  CLK_IN1_N         : in  std_logic;
   -- Reset that only drives logic in example design
   COUNTER_RESET     : in  std_logic;
   CLK_OUT           : out std_logic_vector(1 downto 1) ;
@@ -120,6 +123,8 @@ begin
   process begin
     CLK_IN1 <= not CLK_IN1; wait for (PER1/2);
   end process;
+  CLK_IN1_P <=     CLK_IN1;
+  CLK_IN1_N <= not CLK_IN1;
 
   -- Test sequence
   process 
@@ -177,7 +182,8 @@ begin
     TCQ                => TCQ)
   port map
    (-- Clock in ports
-    CLK_IN1            => CLK_IN1,
+    CLK_IN1_P          => CLK_IN1_P,
+    CLK_IN1_N          => CLK_IN1_N,
     -- Reset for logic in example design
     COUNTER_RESET      => COUNTER_RESET,
     CLK_OUT            => CLK_OUT,

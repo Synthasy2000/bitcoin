@@ -68,7 +68,8 @@ generic (
   TCQ               : in time := 100 ps);
 port
  (-- Clock in ports
-  CLK_IN1           : in  std_logic;
+  CLK_IN1_P         : in  std_logic;
+  CLK_IN1_N         : in  std_logic;
   -- Reset that only drives logic in example design
   COUNTER_RESET     : in  std_logic;
   CLK_OUT           : out std_logic_vector(1 downto 1) ;
@@ -105,7 +106,8 @@ architecture xilinx of dcm_exdes is
 component dcm is
 port
  (-- Clock in ports
-  CLK_IN1           : in     std_logic;
+  CLK_IN1_P         : in     std_logic;
+  CLK_IN1_N         : in     std_logic;
   -- Clock out ports
   CLK_OUT1          : out    std_logic;
   -- Status and control signals
@@ -141,7 +143,8 @@ begin
   clknetwork : dcm
   port map
    (-- Clock in ports
-    CLK_IN1            => CLK_IN1,
+    CLK_IN1_P          => CLK_IN1_P,
+    CLK_IN1_N          => CLK_IN1_N,
     -- Clock out ports
     CLK_OUT1           => clk_int,
     -- Status and control signals

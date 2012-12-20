@@ -37,8 +37,10 @@ end top;
 architecture Behavioral of top is
 
   COMPONENT miner
+    generic ( DEPTH : integer );
     PORT(
           clk : IN std_logic;
+          step : IN std_logic_vector(5 downto 0);
           data : IN std_logic_vector(95 downto 0);
           state : IN  STD_LOGIC_VECTOR (255 downto 0);
           nonce : IN std_logic_vector(31 downto 0);
@@ -68,6 +70,8 @@ architecture Behavioral of top is
         );
   END COMPONENT;
 
+  constant DEPTH : integer := 3;
+
   signal clk : std_logic;
   signal clk_dcmin : std_logic;
   signal clk_dcmout : std_logic;
@@ -90,7 +94,7 @@ architecture Behavioral of top is
 begin
 
 
-  currnonce <= nonce - 2; --TODO: might need to experiment with *2^DEPTH here
+  currnonce <= nonce - 2 * 2 ** DEPTH;
 
   inst_dcm : dcm
   port map (
@@ -103,8 +107,10 @@ begin
            );
 
   miner0: miner
+  generic map ( DEPTH => DEPTH )
   port map (
              clk => clk,
+             step => step,
              data => data,
              state => state,
              nonce => nonce,
@@ -129,51 +135,55 @@ begin
   process(clk)
   begin
     if rising_edge(clk) then
-      nonce <= nonce + 1;
+      step <= step + 1;
+      if conv_integer(step) = 2 ** (6 - DEPTH) - 1 then
+        step <= "000000";
+        nonce <= nonce + 1;
+      end if;
       txdata <= "-------------------------------------------------";
-      txwidth <= "------";
-       txstrobe <= '0';
-       if rxstrobe = '1' then
-         if loading = '1' then
-           if loadctr = "101011" then
-             leds(2 downto 0) <= "100";
-             state <= load(343 downto 88);
-             data <= load(87 downto 0) & rxdata;
-             nonce <= x"00000000";
-             txdata <= "1111111111111111111111111111111111111111000000010";
-             txwidth <= "001010";
-             txstrobe <= '1';
-             loading <= '0';
-           else
-             leds(2 downto 0) <= "101";
-             load(343 downto 8) <= load(335 downto 0);
-             load(7 downto 0) <= rxdata;
-             loadctr <= loadctr + 1;
-           end if;
-         else
-           if rxdata = "00000000" then
-             leds(2 downto 0) <= "110";
-             txdata <= "1111111111111111111111111111111111111111000000000";
-             txwidth <= "001010";
-             txstrobe <= '1';
-           elsif rxdata = "00000001" then
-             leds(2 downto 0) <= "111";
-             loadctr <= "000000";
-             loading <= '1';
-           end if;
-         end if;
-       elsif hit = '1' then
-         leds(2 downto 0) <= "010";
-         txdata <= currnonce(7 downto 0) & "01" & currnonce(15 downto 8) & "01" & currnonce(23 downto 16) & "01" & currnonce(31 downto 24) & "01000000100";
-         txwidth <= "110010";
-         txstrobe <= '1';
-       elsif nonce = x"ffffffff" then
-         leds(2 downto 0) <= "011";
-         txdata <= "1111111111111111111111111111111111111111000000110";
-         txwidth <= "110010";
-         txstrobe <= '1';
-       end if;
-    end if;
+                txwidth <= "------";
+                           txstrobe <= '0';
+                           if rxstrobe = '1' then
+                             if loading = '1' then
+                               if loadctr = "101011" then
+                                 leds(2 downto 0) <= "100";
+                                 state <= load(343 downto 88);
+                                 data <= load(87 downto 0) & rxdata;
+                                 nonce <= x"00000000";
+                                 txdata <= "1111111111111111111111111111111111111111000000010";
+                                 txwidth <= "001010";
+                                 txstrobe <= '1';
+                                 loading <= '0';
+                               else
+                                 leds(2 downto 0) <= "101";
+                                 load(343 downto 8) <= load(335 downto 0);
+                                 load(7 downto 0) <= rxdata;
+                                 loadctr <= loadctr + 1;
+                               end if;
+                             else
+                               if rxdata = "00000000" then
+                                 leds(2 downto 0) <= "110";
+                                 txdata <= "1111111111111111111111111111111111111111000000000";
+                                 txwidth <= "001010";
+                                 txstrobe <= '1';
+                               elsif rxdata = "00000001" then
+                                 leds(2 downto 0) <= "111";
+                                 loadctr <= "000000";
+                                 loading <= '1';
+                               end if;
+                             end if;
+                           elsif hit = '1' then
+                             leds(2 downto 0) <= "010";
+                             txdata <= currnonce(7 downto 0) & "01" & currnonce(15 downto 8) & "01" & currnonce(23 downto 16) & "01" & currnonce(31 downto 24) & "01000000100";
+                             txwidth <= "110010";
+                             txstrobe <= '1';
+                           elsif nonce = x"ffffffff" and step = "000000" then
+                             leds(2 downto 0) <= "011";
+                             txdata <= "1111111111111111111111111111111111111111000000110";
+                             txwidth <= "110010";
+                             txstrobe <= '1';
+                           end if;
+              end if;
     end process;
 
 

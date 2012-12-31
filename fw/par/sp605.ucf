@@ -1,15 +1,10 @@
-NET "rx"                      LOC = "H17";   ##net rx (fpga IN) -> wire labelled tx (cp2103 OUT)
-NET "tx"                      LOC = "B21";   ##net tx (fpga OUT) -> wire labelled rx (cp2103 IN)
-NET "clk_in_p"                LOC = "K21";  ##200MHz on board
-NET "clk_in_n"                LOC = "K22";
-NET "leds[0]" LOC = "D17";
-NET "leds[1]" LOC = "AB4";
-NET "leds[2]" LOC = "D21";
-NET "leds[3]" LOC = "W15";
+##net rx (fpga IN) -> wire labelled tx (cp2103 OUT)
+##net tx (fpga OUT) -> wire labelled rx (cp2103 IN)
+##200MHz on board
 #Created by Constraints Editor (xc6slx45t-fgg484-3) - 2012/12/20
-NET "clk_in_p" TNM_NET = clk_in_p;
-TIMESPEC TS_clk_in_p = PERIOD "clk_in_p" 200 MHz HIGH 50%;
-NET "clk_in_n" TNM_NET = clk_in_n;
-TIMESPEC TS_clk_in_n = PERIOD "clk_in_n" 200 MHz HIGH 50%;
+NET "clk_in_p" TNM_NET = "clk_in_p";
+TIMESPEC TS_clk_in_p = PERIOD "clk_in_p" 200 MHz HIGH 50 %;
+NET "clk_in_n" TNM_NET = "clk_in_n";
+TIMESPEC TS_clk_in_n = PERIOD "clk_in_n" 200 MHz HIGH 50 %;
 NET "rx" OFFSET = IN 1 us VALID 8.68 ns BEFORE "clk_in_n" RISING;
 NET "tx" OFFSET = OUT 1 us AFTER "clk_in_n";

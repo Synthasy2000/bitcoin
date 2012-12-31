@@ -4,7 +4,7 @@ use IEEE.numeric_std.all;
 use IEEE.std_logic_unsigned.all;
 
 package btc is
-  constant WIDTH : integer := 8;
+  constant WIDTH : integer := 6;
   type slv32 is array (0 to (WIDTH-1)) of std_logic_vector(31 downto 0);
 
   function or_slv(v : std_logic_vector) return std_logic;

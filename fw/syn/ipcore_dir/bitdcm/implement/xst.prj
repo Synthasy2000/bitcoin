@@ -1,0 +1,2 @@
+vhdl work ../../bitdcm.vhd
+vhdl work ../example_design/bitdcm_exdes.vhd

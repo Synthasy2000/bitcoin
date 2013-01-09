@@ -62,7 +62,7 @@ architecture Behavioral of top is
         );
   END COMPONENT;
 
-  COMPONENT dcm
+  COMPONENT bitdcm
     PORT(
           CLK_IN1 : in std_logic;
           CLK_OUT1 : out std_logic;
@@ -96,7 +96,7 @@ begin
 
   currnonce <= nonce - 2 * 2 ** DEPTH;
 
-  inst_dcm : dcm
+  inst_dcm : bitdcm
   port map (
              -- Clock in ports
              CLK_IN1 => clk_in,

@@ -1,16 +1,61 @@
-NET "rx"                      LOC = "H17";   ##net rx (fpga IN) -> wire labelled tx (cp2103 OUT)
-NET "tx"                      LOC = "B21";   ##net tx (fpga OUT) -> wire labelled rx (cp2103 IN)
-NET "clk_in"                    LOC = "AB13";  ##27MHz on-board single-ended
-NET "leds[0]" LOC = "D17";
-NET "leds[1]" LOC = "AB4";
-NET "leds[2]" LOC = "D21";
-NET "leds[3]" LOC = "W15";
-#Created by Constraints Editor (xc6slx45t-fgg484-3) - 2012/12/03
-#NET "clk_in" TNM_NET = clk_in;
-#TIMESPEC TS_clk_in = PERIOD "clk_in" 27 MHz HIGH 50%;
+##net rx (fpga IN) -> wire labelled tx (cp2103 OUT)
+NET "rx" LOC = H17;
+##net tx (fpga OUT) -> wire labelled rx (cp2103 IN)
+NET "tx" LOC = B21;
+##27MHz on-board single-ended
+NET "clk_in" LOC = AB13;
+NET "leds[0]" LOC = D17;
+NET "leds[1]" LOC = AB4;
+NET "leds[2]" LOC = D21;
+NET "leds[3]" LOC = W15;
 #Created by Constraints Editor (xc6slx45t-fgg484-3) - 2012/12/19
-NET "clk_in" TNM_NET = clk_in;
-TIMESPEC TS_clk_in = PERIOD "clk_in" 27 MHz HIGH 50%;
-NET "rx" OFFSET = IN 1 us VALID 8.68 us BEFORE "clk_in" RISING;
-NET "tx" OFFSET = OUT AFTER "clk_in";
-PIN "inst_dcm/pll_base_inst.CLKOUT0" TNM = refclk;
+NET "clk_in" TNM_NET = "clk_in";
+TIMESPEC TS_clk_in = PERIOD "clk_in" 27 MHz HIGH 50 %;
+NET "tx" OFFSET = OUT  AFTER "clk_in";
+PIN "inst_dcm/pll_base_inst.CLKOUT0" TNM = "refclk";
+
+INST "miner0/inner/rounds[0].transform" AREA_GROUP = "pblock_rounds[0].transform";
+AREA_GROUP "pblock_rounds[0].transform" RANGE=CLOCKREGION_X0Y6:CLOCKREGION_X0Y6;
+INST "miner0/inner/rounds[1].transform" AREA_GROUP = "pblock_rounds[1].transform";
+AREA_GROUP "pblock_rounds[1].transform" RANGE=CLOCKREGION_X0Y5:CLOCKREGION_X0Y5;
+INST "miner0/inner/rounds[2].transform" AREA_GROUP = "pblock_rounds[2].transform";
+AREA_GROUP "pblock_rounds[2].transform" RANGE=CLOCKREGION_X0Y4:CLOCKREGION_X0Y4;
+INST "miner0/inner/rounds[3].transform" AREA_GROUP = "pblock_rounds[3].transform";
+AREA_GROUP "pblock_rounds[3].transform" RANGE=CLOCKREGION_X0Y3:CLOCKREGION_X0Y3;
+INST "miner0/inner/rounds[4].transform" AREA_GROUP = "pblock_rounds[4].transform";
+AREA_GROUP "pblock_rounds[4].transform" RANGE=CLOCKREGION_X0Y2:CLOCKREGION_X0Y2;
+INST "miner0/inner/rounds[5].transform" AREA_GROUP = "pblock_rounds[5].transform";
+AREA_GROUP "pblock_rounds[5].transform" RANGE=CLOCKREGION_X0Y1:CLOCKREGION_X0Y1;
+INST "miner0/outer/rounds[0].transform" AREA_GROUP = "pblock_rounds[0].transform_1";
+AREA_GROUP "pblock_rounds[0].transform_1" RANGE=CLOCKREGION_X1Y6:CLOCKREGION_X1Y6;
+INST "miner0/outer/rounds[1].transform" AREA_GROUP = "pblock_rounds[1].transform_1";
+AREA_GROUP "pblock_rounds[1].transform_1" RANGE=CLOCKREGION_X1Y5:CLOCKREGION_X1Y5;
+INST "miner0/outer/rounds[2].transform" AREA_GROUP = "pblock_rounds[2].transform_1";
+AREA_GROUP "pblock_rounds[2].transform_1" RANGE=CLOCKREGION_X1Y4:CLOCKREGION_X1Y4;
+INST "miner0/outer/rounds[3].transform" AREA_GROUP = "pblock_rounds[3].transform_1";
+AREA_GROUP "pblock_rounds[3].transform_1" RANGE=CLOCKREGION_X1Y3:CLOCKREGION_X1Y3;
+INST "miner0/outer/rounds[4].transform" AREA_GROUP = "pblock_rounds[4].transform_1";
+AREA_GROUP "pblock_rounds[4].transform_1" RANGE=CLOCKREGION_X1Y2:CLOCKREGION_X1Y2;
+INST "miner0/outer/rounds[5].transform" AREA_GROUP = "pblock_rounds[5].transform_1";
+AREA_GROUP "pblock_rounds[5].transform_1" RANGE=CLOCKREGION_X1Y1:CLOCKREGION_X1Y1;
+INST "miner0/inner/rounds[6].transform" AREA_GROUP = "pblock_1";
+INST "miner0/inner/rounds[7].transform" AREA_GROUP = "pblock_1";
+AREA_GROUP "pblock_1" RANGE=CLOCKREGION_X0Y0:CLOCKREGION_X0Y0;
+INST "miner0/outer/rounds[6].transform" AREA_GROUP = "pblock_2";
+INST "miner0/outer/rounds[7].transform" AREA_GROUP = "pblock_2";
+AREA_GROUP "pblock_2" RANGE=CLOCKREGION_X1Y0:CLOCKREGION_X1Y0;
+
+# PlanAhead Generated physical constraints 
+INST "serial" AREA_GROUP = "pblock_serial";
+AREA_GROUP "pblock_serial" RANGE=SLICE_X52Y112:SLICE_X59Y125;
+AREA_GROUP "pblock_serial" RANGE=RAMB16_X3Y56:RAMB16_X3Y62;
+AREA_GROUP "pblock_serial" RANGE=RAMB8_X3Y56:RAMB8_X3Y63;
+#Created by Constraints Editor (xc6slx45t-fgg484-3) - 2013/01/09
+OFFSET = IN 37.037 ns VALID 37.037 ns BEFORE "clk_in" RISING;
+NET "rx" OFFSET = IN 1.1 us VALID 1.1 us BEFORE "clk_in" RISING;
+OFFSET = OUT 37.037 ns AFTER "clk_in";
+INST "leds<0>" TNM = leds;
+INST "leds<1>" TNM = leds;
+INST "leds<2>" TNM = leds;
+INST "leds<3>" TNM = leds;
+TIMEGRP "leds" OFFSET = OUT 1 ms AFTER "clk_in";

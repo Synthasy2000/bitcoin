@@ -1,4 +1,5 @@
 # Output products list for <bitdcm>
+_xmsgs/pn_parser.xmsgs
 bitdcm/clk_wiz_v3_6_readme.txt
 bitdcm/doc/clk_wiz_v3_6_readme.txt
 bitdcm/doc/clk_wiz_v3_6_vinfo.html
@@ -41,6 +42,7 @@ bitdcm/simulation/timing/vcs_session.tcl
 bitdcm/simulation/timing/wave.do
 bitdcm.asy
 bitdcm.gise
+bitdcm.sym
 bitdcm.ucf
 bitdcm.vhd
 bitdcm.vho

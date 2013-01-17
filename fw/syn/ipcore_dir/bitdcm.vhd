@@ -55,7 +55,7 @@
 -- "Output    Output      Phase     Duty      Pk-to-Pk        Phase"
 -- "Clock    Freq (MHz) (degrees) Cycle (%) Jitter (ps)  Error (ps)"
 ------------------------------------------------------------------------------
--- CLK_OUT1____84.000______0.000______50.0______289.393____206.139
+-- CLK_OUT1___150.429______0.000______50.0______194.759____241.850
 --
 ------------------------------------------------------------------------------
 -- "Input Clock   Freq (MHz)    Input Jitter (UI)"
@@ -121,9 +121,9 @@ begin
     CLK_FEEDBACK         => "CLKFBOUT",
     COMPENSATION         => "SYSTEM_SYNCHRONOUS",
     DIVCLK_DIVIDE        => 1,
-    CLKFBOUT_MULT        => 28,
+    CLKFBOUT_MULT        => 39,
     CLKFBOUT_PHASE       => 0.000,
-    CLKOUT0_DIVIDE       => 9,
+    CLKOUT0_DIVIDE       => 7,
     CLKOUT0_PHASE        => 0.000,
     CLKOUT0_DUTY_CYCLE   => 0.500,
     CLKIN_PERIOD         => 37.037,

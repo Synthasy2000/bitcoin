@@ -39,8 +39,10 @@ entity miner is
   --      this should also help with the routing congestion
   Port ( clk : in  STD_LOGIC;
          reset : in STD_LOGIC;
-         data : in  STD_LOGIC_VECTOR (95 downto 0);
-         state : in  STD_LOGIC_VECTOR (255 downto 0);
+
+         shiftindata : in STD_LOGIC;
+         shiftinen   : in STD_LOGIC;
+
          valid_nonce : out STD_LOGIC_VECTOR(31 downto 0);
          exhausted_space : out STD_LOGIC;
          hit : out  STD_LOGIC);
@@ -72,12 +74,29 @@ architecture Behavioral of miner is
   signal nonce : std_logic_vector(31 downto 0);
   signal curnnoce : std_logic_vector(31 downto 0);
   signal active : std_logic := '0';
+
+  --state, data
+  signal shiftreg : std_logic_vector((256+96-1) downto 0);
+  signal state : std_logic_vector(255 downto 0);
+  signal data : std_logic_vector(95 downto 0);
 begin
 
   innerdata <= innerprefix & nonce & data;
   outerdata <= outerprefix & innerhash;
   hit <= '1' when outerhash(255 downto 224) = x"00000000" and step = "000000" else '0';
   valid_nonce <= nonce - 2 * 2 ** DEPTH;
+
+  state <= shiftreg((256+96-1) downto 96);
+  data  <= shiftreg(95 downto 0);
+
+  process(clk, shiftinen)
+  begin
+    if clk'event and clk = '1' then
+      if shiftinen = '1' then
+        shiftreg <= shiftreg((256+96-2) downto 0) & shiftindata;
+      end if;
+    end if;
+  end process;
 
   --Work management
   process(clk, reset)

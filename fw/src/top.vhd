@@ -45,8 +45,10 @@ architecture Behavioral of top is
   PORT(
         clk : IN std_logic;
         reset : IN std_logic;
-        data : IN std_logic_vector(95 downto 0);
-        state : IN  STD_LOGIC_VECTOR (255 downto 0);
+
+        shiftindata : in std_logic;
+        shiftinen   : in std_logic;
+
         valid_nonce : OUT std_logic_vector(31 downto 0);
         exhausted_space : out STD_LOGIC;
         hit : OUT std_logic
@@ -97,6 +99,13 @@ architecture Behavioral of top is
   signal hit             : std_logic_vector(1 downto 0);
   type nonces is array (1 downto 0) of std_logic_vector(31 downto 0);
   signal valid_nonce    : nonces;
+  signal shiftindata : std_logic;
+  signal shiftinen : std_logic;
+  signal shiftreg : std_logic_vector((256+96-1) downto 0);
+  signal shifted : integer := 0;
+  constant TOTALSHIFT : integer := 256 + 96;
+  signal start_shift : std_logic;
+  signal finish_shift : std_logic;
 
 begin
 
@@ -120,8 +129,8 @@ begin
   port map (
              clk => clk,
              reset => miner_reset,
-             data => data,
-             state => state,
+             shiftindata => shiftindata,
+             shiftinen => shiftinen,
              exhausted_space => exhausted_space(0),
              valid_nonce => valid_nonce(0),
              hit => hit(0)
@@ -137,8 +146,8 @@ begin
   port map (
              clk => clk,
              reset => miner_reset,
-             data => data,
-             state => state,
+             shiftindata => shiftindata,
+             shiftinen => shiftinen,
              exhausted_space => exhausted_space(1),
              valid_nonce => valid_nonce(1),
              hit => hit(1)
@@ -159,19 +168,51 @@ begin
 
   leds(3) <= locked;
 
-  process(clk)
+  shifting: process(clk, start_shift, finish_shift, shifted)
+  begin
+    if clk'event and clk = '1' then
+      shiftindata <= shiftreg(0);
+      if start_shift = '1' then
+        miner_reset <= '1';
+        shiftreg <= '0' & shiftreg((256+96-1) downto 1);
+        shifted <= shifted + 1;
+        shiftinen <= '1';
+
+        --TODO: may be off by 1 here
+        if shifted = (TOTALSHIFT-1) then
+          miner_reset <= '0';
+          shiftinen <= '0';
+          finish_shift <= '1';
+        end if;
+      else
+        shiftreg((256+96-1) downto 96) <= state;
+        shiftreg(95 downto 0) <= data;
+
+        if finish_shift = '1' then
+          finish_shift <= '0';
+          shifted <= 0;
+        end if;
+      end if;
+    end if;
+  end process;
+
+  uarting: process(clk, rxstrobe, loading, hit, exhausted_space)
   begin
     if rising_edge(clk) then
       txdata <= "0000000000000000000000000000000000000000000000000";
       txwidth <= "000000";
       txstrobe <= '0';
+
+      if start_shift = '1' and finish_shift = '1' then
+        start_shift <= '0';
+      end if;
+
       if rxstrobe = '1' then
         if loading = '1' then
           if loadctr = "101011" then
             leds(2 downto 0) <= "100";
             state <= load(343 downto 88);
             data <= load(87 downto 0) & rxdata;
-            miner_reset <= '0';
             txdata <= "1111111111111111111111111111111111111111000000010";
             txwidth <= "001010";
             txstrobe <= '1';
@@ -181,7 +222,7 @@ begin
             load(343 downto 8) <= load(335 downto 0);
             load(7 downto 0) <= rxdata;
             loadctr <= loadctr + 1;
-            miner_reset <= '1';
+            start_shift <= '1';
           end if;
         else
           if rxdata = "00000000" then

@@ -1,4 +1,4 @@
-# file: bitdcm.ucf
+# file: bitdcm_exdes.ucf
 # 
 # (c) Copyright 2008 - 2011 Xilinx, Inc. All rights reserved.
 # 
@@ -63,4 +63,6 @@ TIMESPEC "TS_CLK_IN1" = PERIOD "CLK_IN1" 37.037 ns HIGH 50% INPUT_JITTER 370.37p
 
 
 # FALSE PATH constraints 
+PIN "COUNTER_RESET" TIG;
+
 

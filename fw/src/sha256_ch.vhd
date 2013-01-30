@@ -40,7 +40,9 @@ architecture Behavioral of sha256_ch is
 
 begin
 
-  q <= z xor (x and (y xor z));
+  --listed in spec as: '(x and y) xor ((not x) and z)'
+  --is 'z xor (x and (y xor z))' easier to implement in FPGA logic?
+  q <= (x and y) xor ((not x) and z);
 
 end Behavioral;
 

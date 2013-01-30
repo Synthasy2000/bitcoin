@@ -40,6 +40,8 @@ architecture Behavioral of sha256_maj is
 
 begin
 
+  --listed in spec as '(x and y) xor (x and z) xor (y and z)'
+  --is '(x and y) or (z and (x or y))' easier?
   q <= (x and y) or (z and (x or y));
 
 end Behavioral;

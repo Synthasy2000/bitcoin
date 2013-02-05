@@ -21,6 +21,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_MISC.ALL;
 
 library UNISIM;
 use UNISIM.VComponents.all;
@@ -36,7 +37,9 @@ end top;
 architecture Behavioral of top is
 
   COMPONENT miner
-    generic ( DEPTH : integer );
+    generic ( DEPTH : integer;
+              START : integer;
+              INTERVAL : integer);
     PORT(
           clk : IN std_logic;
           reset : IN std_logic;
@@ -71,6 +74,7 @@ architecture Behavioral of top is
   END COMPONENT;
 
   constant DEPTH : integer := 0;
+  constant NUM_MINERS : integer := 8;
 
   signal reset : std_logic;
   signal clk : std_logic;
@@ -81,15 +85,29 @@ architecture Behavioral of top is
   signal load : std_logic_vector(343 downto 0);
   signal loadctr : std_logic_vector(5 downto 0);
   signal loading : std_logic := '0';
-  signal hit : std_logic;
   signal txdata : std_logic_vector(48 downto 0);
   signal txwidth : std_logic_vector(5 downto 0);
   signal txstrobe : std_logic;
   signal rxdata : std_logic_vector(7 downto 0);
   signal rxstrobe : std_logic;
   signal locked : std_logic;
-  signal currnonce : std_logic_vector(31 downto 0);
-  signal exhausted : std_logic;
+
+  --Postfix 's' to indicate an array of miner signals (almost plural, but not quite)
+  type nonces is array ((NUM_MINERS-1) downto 0) of std_logic_vector(31 downto 0);
+  signal currnonces : nonces;
+  signal hits : std_logic_vector((NUM_MINERS-1) downto 0);
+  signal exhausteds : std_logic_vector((NUM_MINERS-1) downto 0);
+
+  function process_hits(arghits : std_logic_vector; argnonces : nonces) return std_logic_vector is
+    variable result : std_logic_vector(48 downto 0);
+  begin
+    for i in 0 to (arghits'length-1) loop
+      if arghits(i) = '1' then
+        result := argnonces(i)(7 downto 0) & "01" & argnonces(i)(15 downto 8) & "01" & argnonces(i)(23 downto 16) & "01" & argnonces(i)(31 downto 24) & "01000000100";
+      end if;
+    end loop;
+    return result;
+  end function;
 
 begin
 
@@ -104,17 +122,23 @@ begin
              LOCKED => locked
            );
 
-  miner0: miner
-  generic map ( DEPTH => DEPTH )
-  port map (
-             clk => clk,
-             reset => reset,
-             data => data,
-             state => state,
-             currnonce => currnonce,
-             hit => hit,
-             exhausted => exhausted
-           );
+  m: for i in 0 to (NUM_MINERS-1) generate
+    Inst_miner: miner
+    generic map (
+                  DEPTH => DEPTH,
+                  START => i,
+                  INTERVAL => NUM_MINERS
+                )
+    port map (
+               clk => clk,
+               reset => reset,
+               data => data,
+               state => state,
+               currnonce => currnonces(i),
+               hit => hits(i),
+               exhausted => exhausteds(i)
+             );
+  end generate;
 
   serial: uart
   port map (
@@ -167,13 +191,12 @@ begin
           end if;
         end if;
 
-      elsif hit = '1' then
+      elsif OR_REDUCE(hits) = '1' then
         --Found a valid response
-        txdata <= currnonce(7 downto 0) & "01" & currnonce(15 downto 8) & "01" & currnonce(23 downto 16) & "01" & currnonce(31 downto 24) & "01000000100";
+        txdata <= process_hits(hits, currnonces);
         txwidth <= "110010";
         txstrobe <= '1';
-
-      elsif exhausted = '1' then
+      elsif AND_REDUCE(exhausteds) = '1' then
         --Reached the end of the search space
         txdata <= "1111111111111111111111111111111111111111000000110";
         txwidth <= "110010";

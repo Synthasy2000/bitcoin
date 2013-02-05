@@ -19,8 +19,9 @@
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+--use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.NUMERIC_STD.ALL;
 
 ---- Uncomment the following library declaration if instantiating
 ---- any Xilinx primitives in this code.
@@ -28,7 +29,9 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 --use UNISIM.VComponents.all;
 
 entity miner is
-  generic ( DEPTH : integer );
+  generic ( DEPTH : integer;
+            START : integer;
+            INTERVAL : integer);
   Port ( clk : in  STD_LOGIC;
          reset : in STD_LOGIC;
          data : in  STD_LOGIC_VECTOR (95 downto 0);
@@ -68,24 +71,24 @@ begin
   innerdata <= innerprefix & nonce & data;
   outerdata <= outerprefix & innerhash;
   hit <= '1' when outerhash(255 downto 224) = x"00000000" and step = "000000" else '0';
-  currnonce <= nonce - 2 * 2 ** DEPTH;
+  currnonce <= nonce - 2 ** (DEPTH + 1);
 
   ctrl: process(clk, reset)
   begin
     if clk'event and clk = '1' then
       if reset = '1' then
-        nonce <= (others => '0');
+        nonce <= std_logic_vector(TO_UNSIGNED(START, 32));
         step  <= (others => '0');
         exhausted <= '0';
       else
         step <= step + 1;
         if conv_integer(step) = 2 ** (6 - DEPTH) - 1 then
           step <= "000000";
-          nonce <= nonce + 1;
-        end if;
-
-        if nonce = x"ffffffff" and step = "000000" then
-          exhausted <= '1';
+          if (TO_INTEGER(x"ffffffff" - unsigned(nonce)) <= INTERVAL) then
+            exhausted <= '1';
+          else
+            nonce <= nonce + std_logic_vector(TO_UNSIGNED(INTERVAL, 32));
+          end if;
         end if;
       end if;
     end if;

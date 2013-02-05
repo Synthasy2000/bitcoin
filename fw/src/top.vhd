@@ -29,8 +29,7 @@ entity top is
   port (
          clk_in : in  STD_LOGIC;
          tx     : out STD_LOGIC;
-         rx     : in  STD_LOGIC;
-         leds   : out STD_LOGIC_VECTOR(3 downto 0)
+         rx     : in  STD_LOGIC
        );
 end top;
 
@@ -40,11 +39,12 @@ architecture Behavioral of top is
     generic ( DEPTH : integer );
     PORT(
           clk : IN std_logic;
-          step : IN std_logic_vector(5 downto 0);
+          reset : IN std_logic;
           data : IN std_logic_vector(95 downto 0);
           state : IN  STD_LOGIC_VECTOR (255 downto 0);
-          nonce : IN std_logic_vector(31 downto 0);
-          hit : OUT std_logic
+          currnonce : OUT std_logic_vector(31 downto 0);
+          hit : OUT std_logic;
+          exhausted : OUT std_logic
         );
   END COMPONENT;
 
@@ -70,15 +70,14 @@ architecture Behavioral of top is
         );
   END COMPONENT;
 
-  constant DEPTH : integer := 1;
+  constant DEPTH : integer := 0;
 
+  signal reset : std_logic;
   signal clk : std_logic;
   signal clk_dcmin : std_logic;
   signal clk_dcmout : std_logic;
   signal data : std_logic_vector(95 downto 0);
   signal state : std_logic_vector(255 downto 0);
-  signal nonce : std_logic_vector(31 downto 0);
-  signal currnonce : std_logic_vector(31 downto 0);
   signal load : std_logic_vector(343 downto 0);
   signal loadctr : std_logic_vector(5 downto 0);
   signal loading : std_logic := '0';
@@ -88,13 +87,12 @@ architecture Behavioral of top is
   signal txstrobe : std_logic;
   signal rxdata : std_logic_vector(7 downto 0);
   signal rxstrobe : std_logic;
-  signal step : std_logic_vector(5 downto 0) := "000000";
   signal locked : std_logic;
+  signal currnonce : std_logic_vector(31 downto 0);
+  signal exhausted : std_logic;
 
 begin
 
-
-  currnonce <= nonce - 2 * 2 ** DEPTH;
 
   inst_dcm : bitdcm
   port map (
@@ -110,11 +108,12 @@ begin
   generic map ( DEPTH => DEPTH )
   port map (
              clk => clk,
-             step => step,
+             reset => reset,
              data => data,
              state => state,
-             nonce => nonce,
-             hit => hit
+             currnonce => currnonce,
+             hit => hit,
+             exhausted => exhausted
            );
 
   serial: uart
@@ -130,18 +129,9 @@ begin
              rxstrobe => rxstrobe
            );
 
-  leds(3) <= locked;
-
   process(clk)
   begin
     if rising_edge(clk) then
-      step <= step + 1;
-
-      if conv_integer(step) = 2 ** (6 - DEPTH) - 1 then
-        step <= "000000";
-        nonce <= nonce + 1;
-      end if;
-
       txdata <= "0000000000000000000000000000000000000000000000000";
       txwidth <= "000000";
       txstrobe <= '0';
@@ -150,17 +140,15 @@ begin
         if loading = '1' then
           if loadctr = "101011" then
             --Finish loading
-            leds(2 downto 0) <= "100";
             state <= load(343 downto 88);
             data <= load(87 downto 0) & rxdata;
-            nonce <= x"00000000";
             txdata <= "1111111111111111111111111111111111111111000000010";
             txwidth <= "001010";
             txstrobe <= '1';
             loading <= '0';
+            reset <= '0';
           else
             --Loading cycle
-            leds(2 downto 0) <= "101";
             load(343 downto 8) <= load(335 downto 0);
             load(7 downto 0) <= rxdata;
             loadctr <= loadctr + 1;
@@ -168,28 +156,25 @@ begin
         else
           if rxdata = "00000000" then
             --?
-            leds(2 downto 0) <= "110";
             txdata <= "1111111111111111111111111111111111111111000000000";
             txwidth <= "001010";
             txstrobe <= '1';
           elsif rxdata = "00000001" then
             --Start loading data
-            leds(2 downto 0) <= "111";
             loadctr <= "000000";
             loading <= '1';
+            reset <= '1';
           end if;
         end if;
 
       elsif hit = '1' then
         --Found a valid response
-        leds(2 downto 0) <= "010";
         txdata <= currnonce(7 downto 0) & "01" & currnonce(15 downto 8) & "01" & currnonce(23 downto 16) & "01" & currnonce(31 downto 24) & "01000000100";
         txwidth <= "110010";
         txstrobe <= '1';
 
-      elsif nonce = x"ffffffff" and step = "000000" then
+      elsif exhausted = '1' then
         --Reached the end of the search space
-        leds(2 downto 0) <= "011";
         txdata <= "1111111111111111111111111111111111111111000000110";
         txwidth <= "110010";
         txstrobe <= '1';

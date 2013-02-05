@@ -30,11 +30,12 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity miner is
   generic ( DEPTH : integer );
   Port ( clk : in  STD_LOGIC;
-         step : in  STD_LOGIC_VECTOR (5 downto 0);
+         reset : in STD_LOGIC;
          data : in  STD_LOGIC_VECTOR (95 downto 0);
          state : in  STD_LOGIC_VECTOR (255 downto 0);
-         nonce : in  STD_LOGIC_VECTOR (31 downto 0);
-         hit : out  STD_LOGIC);
+         currnonce : out STD_LOGIC_VECTOR(31 downto 0);
+         hit : out  STD_LOGIC;
+         exhausted : out STD_LOGIC);
 end miner;
 
 architecture Behavioral of miner is
@@ -59,11 +60,36 @@ architecture Behavioral of miner is
   signal innerhash : std_logic_vector(255 downto 0);
   signal outerhash : std_logic_vector(255 downto 0);
 
+  signal nonce : std_logic_vector(31 downto 0) := (others => '0');
+  signal step  : std_logic_vector(5 downto 0) := (others => '0');
+
 begin
 
   innerdata <= innerprefix & nonce & data;
   outerdata <= outerprefix & innerhash;
   hit <= '1' when outerhash(255 downto 224) = x"00000000" and step = "000000" else '0';
+  currnonce <= nonce - 2 * 2 ** DEPTH;
+
+  ctrl: process(clk, reset)
+  begin
+    if clk'event and clk = '1' then
+      if reset = '1' then
+        nonce <= (others => '0');
+        step  <= (others => '0');
+        exhausted <= '0';
+      else
+        step <= step + 1;
+        if conv_integer(step) = 2 ** (6 - DEPTH) - 1 then
+          step <= "000000";
+          nonce <= nonce + 1;
+        end if;
+
+        if nonce = x"ffffffff" and step = "000000" then
+          exhausted <= '1';
+        end if;
+      end if;
+    end if;
+  end process;
 
   inner: sha256_pipeline
   generic map ( DEPTH => DEPTH )

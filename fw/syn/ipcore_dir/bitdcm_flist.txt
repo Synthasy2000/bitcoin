@@ -42,7 +42,6 @@ bitdcm/simulation/timing/vcs_session.tcl
 bitdcm/simulation/timing/wave.do
 bitdcm.asy
 bitdcm.gise
-bitdcm.sym
 bitdcm.ucf
 bitdcm.vhd
 bitdcm.vho
